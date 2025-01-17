@@ -1,5 +1,5 @@
-name: 'Release PR'
-description: 'Prepare a release PR'
+name: 'Release Action'
+description: 'Automates releases changelog using pull requests a'
 inputs:
   file-name:
     description: 'The file that should be updated (defaults to CHANGELOG.md)'

@@ -1,23 +1,52 @@
-# Release PR Action
+# Release Action
 
-This action prints "Hello World" or "Hello" + the name of a person to greet to the log.
+This GitHub Action automates the process of preparing a release pull request (PR) and optionally creating a GitHub release. This action is customizable and integrates seamlessly with your repository.
+
+## Features
+- Generates changelogs from commit messages.
+- Prepares a release PR with updates from the specified changelog file.
+- Supports targeting a specific branch for releases.
+- Optionally skips creating a GitHub release.
 
 ## Inputs
 
-### `who-to-greet`
-
-**Required** The name of the person to greet. Default `"World"`.
+| Name                 | Description                                                | Default          | Required |
+|----------------------|------------------------------------------------------------|------------------|----------|
+| `file-name`          | The file that should be updated, typically the changelog.  | `CHANGELOG.md`   | No       |
+| `target-branch`      | The branch on which releases are performed.                | `main`           | No       |
+| `github-token`       | Your GitHub token for authentication.                      | N/A              | Yes      |
+| `skip-github-release`| Whether to skip creating a GitHub release.                 | `false`          | No       |
 
 ## Outputs
 
-### `time`
+| Name                | Description                                     |
+|---------------------|-------------------------------------------------|
+| `pr-created`        | Indicates if a release PR was successfully created. |
+| `release-created`   | Indicates if a GitHub release was successfully created. |
 
-The time we greeted you.
+## Usage
 
-## Example usage
+Below is an example of how to use the **Release PR** action in a workflow file:
 
 ```yaml
-uses: actions/hello-world-typescript-action@e76147da8e5c81eaf017dede5645551d4b94427b
-with:
-  who-to-greet: 'Mona the Octocat'
-```
+name: Create Release PR
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  release-pr:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Prepare Release PR
+        uses: your-username/release-pr-action@v1
+        with:
+          file-name: 'CHANGELOG.md'
+          target-branch: 'main'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          skip-github-release: 'false'
