@@ -12,18 +12,19 @@ async function main() {
         core.info(`Running release action"...`);
         const fileName = core.getInput("file-name");
         const targetBranch = core.getInput("target-branch");
+        const releaseBranch = `release-action--branch-${targetBranch}`;
         const githubToken = core.getInput("github-token");
         const skipGithubRelease = core.getInput("skip-github-release");
-
         const octokit = github.getOctokit(githubToken);
 
+        // !!These need to be placed here before any other git commands are run!!
         await setupLocalUser();
         await fetchBranchWithTags(targetBranch);
+
         const prevVersion = await getLastVersionTag(targetBranch);
         core.info(`Previous version: ${prevVersion}.`);
         const newVersion = await getNewVersion(prevVersion);
         core.info(`New version: ${newVersion}.`);
-        const releaseBranch = `release-action--branch-${targetBranch}`;
 
         const lastCommitSHA = await getLastCommitSHA(targetBranch);
         const {owner, repo} = github.context.repo;
@@ -38,7 +39,6 @@ async function main() {
         });
 
         const mergedReleasePRs = prs.data.items;
-
         if (mergedReleasePRs.length > 0) {
             const pr = mergedReleasePRs[0]; // Assuming the first result is the match
 
@@ -98,7 +98,6 @@ async function main() {
         }
 
         await updateChangelog(fileName, newVersion, prevVersion);
-
         await forcePush(releaseBranch);
 
         const {data: existingPrs} = await octokit.rest.pulls.list({

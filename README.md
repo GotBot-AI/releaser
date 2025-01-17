@@ -1,8 +1,10 @@
 # Release Action
 
-This GitHub Action automates the process of preparing a release pull request (PR) and optionally creating a GitHub release. This action is customizable and integrates seamlessly with your repository.
+This GitHub Action automates the process of preparing a release pull request (PR) and optionally creating a GitHub
+release. This action is customizable and integrates seamlessly with your repository.
 
 ## Features
+
 - Generates changelogs from commit messages.
 - Prepares a release PR with updates from the specified changelog file.
 - Supports targeting a specific branch for releases.
@@ -10,19 +12,19 @@ This GitHub Action automates the process of preparing a release pull request (PR
 
 ## Inputs
 
-| Name                 | Description                                                | Default          | Required |
-|----------------------|------------------------------------------------------------|------------------|----------|
-| `file-name`          | The file that should be updated, typically the changelog.  | `CHANGELOG.md`   | No       |
-| `target-branch`      | The branch on which releases are performed.                | `main`           | No       |
-| `github-token`       | Your GitHub token for authentication.                      | N/A              | Yes      |
-| `skip-github-release`| Whether to skip creating a GitHub release.                 | `false`          | No       |
+| Name                  | Description                                               | Default        | Required |
+|-----------------------|-----------------------------------------------------------|----------------|----------|
+| `file-name`           | The file that should be updated, typically the changelog. | `CHANGELOG.md` | No       |
+| `target-branch`       | The branch on which releases are performed.               | `main`         | No       |
+| `github-token`        | Your GitHub token for authentication.                     | N/A            | Yes      |
+| `skip-github-release` | Whether to skip creating a GitHub release.                | `false`        | No       |
 
 ## Outputs
 
-| Name                | Description                                     |
-|---------------------|-------------------------------------------------|
-| `pr-created`        | Indicates if a release PR was successfully created. |
-| `release-created`   | Indicates if a GitHub release was successfully created. |
+| Name              | Description                                             |
+|-------------------|---------------------------------------------------------|
+| `pr-created`      | Indicates if a release PR was successfully created.     |
+| `release-created` | Indicates if a GitHub release was successfully created. |
 
 ## Usage
 
