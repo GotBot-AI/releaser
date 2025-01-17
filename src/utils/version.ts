@@ -9,12 +9,12 @@ export async function getLastVersionTag(branch: string) {
         })
         return latestTag.stdout.trim();
     } catch (error) {
-        return "v0.0.0";
+        return null;
     }
 }
 
 // Determine the new version based on commit messages
-export async function getNewVersion(lastVersion: string) {
+export async function getNextVersion(lastVersion: string) {
     let [major, minor, patch] = lastVersion.slice(1).split(".").map(Number); // Remove 'v' and split the version
 
     const commits = await getCommitsSince(lastVersion);

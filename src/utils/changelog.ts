@@ -44,14 +44,15 @@ export const changelog = (version: string, date: string, commits: string, change
     fs.writeFileSync(changelogFile, newEntry + newChangelog);
 }
 
-export async function updateChangelog(fileName: string, newVersion: string, prevVersion: string) {
+export async function updateChangelog(fileName: string, newVersion: string, prevVersion: string | null) {
     // Check if the changelog file exists, create it if it doesn't
     if (!fs.existsSync(fileName)) {
         console.log("Changelog file does not exist. Creating a new one...");
         createChangelogFile(fileName);
     }
 
-    const commits = await getCommitsSince(prevVersion);
+    const maxCommitCount = prevVersion === null ? 10 : -1;
+    const commits = await getCommitsSince(prevVersion, maxCommitCount);
 
     if (!commits) {
         console.log("No new commits since last tag. Changelog is up-to-date.");

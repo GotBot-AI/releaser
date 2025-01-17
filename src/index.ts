@@ -2,9 +2,9 @@ import * as core from '@actions/core';
 import * as github from '@actions/github';
 import {getExistingVersionLog, updateChangelog} from "./utils/changelog";
 import {createBranch, resetBranchToBranch} from "./utils/branch";
-import {fetchBranchWithTags, forcePush} from "./utils/origin";
+import {fetchBranchWithTags, forcePushCommits, forcePushTag} from "./utils/origin";
 import {setupLocalUser} from "./utils/user";
-import {getLastVersionTag, getNewVersion} from "./utils/version";
+import {getLastVersionTag, getNextVersion} from "./utils/version";
 import {getLastCommitSHA} from "./utils/commit";
 
 async function main() {
@@ -20,13 +20,18 @@ async function main() {
         // !!These need to be placed here before any other git commands are run!!
         await setupLocalUser();
         await fetchBranchWithTags(targetBranch);
+        const lastCommitSHA = await getLastCommitSHA(targetBranch);
 
         const prevVersion = await getLastVersionTag(targetBranch);
-        core.info(`Previous version: ${prevVersion}.`);
-        const newVersion = await getNewVersion(prevVersion);
-        core.info(`New version: ${newVersion}.`);
+        let newVersion = "v1.0.0";
+        if (prevVersion === null) {
+            core.info(`No previous version found. starting at ${newVersion}.`);
+        } else {
+            core.info(`Previous version: ${prevVersion}.`);
+            newVersion = await getNextVersion(prevVersion);
+            core.info(`New version: ${newVersion}.`);
+        }
 
-        const lastCommitSHA = await getLastCommitSHA(targetBranch);
         const {owner, repo} = github.context.repo;
         const {data: branches} = await octokit.rest.repos.listBranches({
             owner: owner,
@@ -39,6 +44,7 @@ async function main() {
         });
 
         const mergedReleasePRs = prs.data.items;
+        // Release Step
         if (mergedReleasePRs.length > 0) {
             const pr = mergedReleasePRs[0]; // Assuming the first result is the match
 
@@ -82,49 +88,49 @@ async function main() {
             core.setOutput("pr-created", false);
 
             return;
-        } else {
+        }
+        // Release Preparation Step
+        else {
             core.info("No corresponding merged release pull request found.");
-        }
+            const releaseBranchExists = branches.some((branch) => branch.name === releaseBranch);
+            if (releaseBranchExists) {
+                core.info(`Branch "${releaseBranch}" already exists. Resetting "${releaseBranch}" to match "${targetBranch}"...`);
+                await resetBranchToBranch(releaseBranch, targetBranch);
+                core.info(`Branch "${releaseBranch}" has been reset to "${targetBranch}".`);
+            } else {
+                core.info(`Creating branch "${releaseBranch}" from "${targetBranch}"...`);
+                await createBranch(releaseBranch, targetBranch);
+                core.info(`Branch "${releaseBranch}" has been created from "${targetBranch}".`);
+            }
 
-        const releaseBranchExists = branches.some((branch) => branch.name === releaseBranch);
-        if (releaseBranchExists) {
-            core.info(`Branch "${releaseBranch}" already exists. Resetting "${releaseBranch}" to match "${targetBranch}"...`);
-            await resetBranchToBranch(releaseBranch, targetBranch);
-            core.info(`Branch "${releaseBranch}" has been reset to "${targetBranch}".`);
-        } else {
-            core.info(`Creating branch "${releaseBranch}" from "${targetBranch}"...`);
-            await createBranch(releaseBranch, targetBranch);
-            core.info(`Branch "${releaseBranch}" has been created from "${targetBranch}".`);
-        }
+            await updateChangelog(fileName, newVersion, prevVersion);
+            await forcePushCommits(releaseBranch);
 
-        await updateChangelog(fileName, newVersion, prevVersion);
-        await forcePush(releaseBranch);
-
-        const {data: existingPrs} = await octokit.rest.pulls.list({
-            owner: owner,
-            repo: repo,
-            head: `${owner}:${releaseBranch}`,
-            base: targetBranch,
-        });
-
-        if (existingPrs.length === 0) {
-            core.info(`Creating a new PR from "${releaseBranch}" to "${targetBranch}"...`);
-            await octokit.rest.pulls.create({
+            const {data: existingPrs} = await octokit.rest.pulls.list({
                 owner: owner,
                 repo: repo,
-                title: `PR to merge "${releaseBranch}" into ${targetBranch}`,
-                head: releaseBranch,
+                head: `${owner}:${releaseBranch}`,
                 base: targetBranch,
-                body: 'This PR contains release-related changes applied to the branch.',
             });
-            core.info(`PR to merge "${releaseBranch}" into ${targetBranch} has been created.`);
-            core.setOutput("pr-created", true);
-        } else {
-            core.setOutput("pr-created", false);
-        }
-        core.info(`Branch "${releaseBranch}" is now in sync with "${targetBranch}", and the PR is updated.`);
-        core.setOutput("release-created", false);
 
+            if (existingPrs.length === 0) {
+                core.info(`Creating a new PR from "${releaseBranch}" to "${targetBranch}"...`);
+                await octokit.rest.pulls.create({
+                    owner: owner,
+                    repo: repo,
+                    title: `PR to merge "${releaseBranch}" into ${targetBranch}`,
+                    head: releaseBranch,
+                    base: targetBranch,
+                    body: 'This PR contains release-related changes applied to the branch.',
+                });
+                core.info(`PR to merge "${releaseBranch}" into ${targetBranch} has been created.`);
+                core.setOutput("pr-created", true);
+            } else {
+                core.setOutput("pr-created", false);
+            }
+            core.info(`Branch "${releaseBranch}" is now in sync with "${targetBranch}", and the PR is updated.`);
+            core.setOutput("release-created", false);
+        }
     } catch (error: any) {
         core.error(error)
         core.setFailed(error.message);
