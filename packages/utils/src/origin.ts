@@ -12,6 +12,7 @@ export async function fetchBranchWithTags(branchName: string) {
     const {stdout: isShallow} = await execAsync(`git rev-parse --is-shallow-repository`, {
         encoding: "utf-8",
     });
+    console.log(isShallow)
     const suffix = isShallow === "true" ? "--unshallow" : "";
     await execAsync(`git fetch origin ${branchName} ${suffix}`);
     await execAsync(`git fetch --tags origin ${branchName}`);

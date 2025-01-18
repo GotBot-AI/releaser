@@ -32021,6 +32021,7 @@ function fetchBranchWithTags(branchName) {
         const { stdout: isShallow } = yield execute(`git rev-parse --is-shallow-repository`, {
             encoding: "utf-8",
         });
+        console.log(isShallow);
         const suffix = isShallow === "true" ? "--unshallow" : "";
         yield execute(`git fetch origin ${branchName} ${suffix}`);
         yield execute(`git fetch --tags origin ${branchName}`);
