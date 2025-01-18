@@ -1,5 +1,5 @@
 import * as fs from "fs";
-import * as changelog from '../../src/utils/changelog';
+import * as changelog from '../../src/changelog';
 
 // Mock dependencies
 jest.mock('fs');
@@ -31,7 +31,7 @@ describe('changelog.ts', () => {
         expect(fs.writeFileSync).not.toHaveBeenCalled();
     });
 
-    test('updates the changelog with the new version', () => {
+    test('updates the changelog with the new utils', () => {
         jest.mocked(fs.readFileSync).mockImplementation(() => '## [v1.2.3] - 2024-12-31\n\n- fix: fix a bug\n');
         jest.mocked(fs.writeFileSync).mockImplementation(() => {
         });
@@ -49,7 +49,7 @@ describe('changelog.ts', () => {
         );
     });
 
-    test('removes existing changelog entries for the version before adding a new one', () => {
+    test('removes existing changelog entries for the utils before adding a new one', () => {
         jest.mocked(fs.readFileSync).mockImplementation(() =>
             '## [v1.3.0] - 2025-01-16\n- feat: add new feature\n- fix: fix a bug\n\n## [v1.2.3] - 2024-12-31\n\n- fix: fix a bug\n'
         );

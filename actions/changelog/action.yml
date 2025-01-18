@@ -1,4 +1,4 @@
-name: 'Release Action'
+name: 'Changelog'
 description: 'Automates releases changelog using pull requests a'
 inputs:
   file-name:
@@ -7,12 +7,12 @@ inputs:
   target-branch:
     description: 'The branch that releases are done on (defaults to main)'
     default: 'main'
+  source-branch:
+    description: 'The branch that changelogs are generated from (defaults to current branch)'
+    default: ${{ github.ref_name }}
   github-token:
-    description: 'Your GitHub token (required)'
-    required: true
-  skip-github-release:
-    description: 'Skips GitHub release (defaults to false)'
-    default: 'false'
+    description: 'Your GitHub token (defaults to using secrets.GITHUB_TOKEN)'
+    default: ${{ github.token }}
 outputs:
   pr-created:
     description: 'True when a PR is created'

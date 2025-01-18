@@ -14,7 +14,7 @@ const createChangelogFile = (changelogFile: string) => {
 }
 
 function buildVersionBlockRegex(version: string) {
-    // Regular expression to match the entire block for a version
+    // Regular expression to match the entire block for a utils
     return new RegExp(
         `## \\[${version}\\](.*?)(?=## \\[|$)`,
         "gs",
@@ -28,13 +28,13 @@ export function getExistingVersionLog(version: string, changelogFile: string) {
     return matches ? matches[0] : "";
 }
 
-// Update the changelog with the new version
+// Update the changelog with the new utils
 export const changelog = (version: string, date: string, commits: string, changelogFile: string) => {
     let changelog = fs.readFileSync(changelogFile, "utf-8");
 
     const versionBlockRegex = buildVersionBlockRegex(version);
 
-    // If the version block exists, replace it, otherwise append it
+    // If the utils block exists, replace it, otherwise append it
     const newChangelog = changelog.replace(versionBlockRegex, "");
 
     // Create new entry

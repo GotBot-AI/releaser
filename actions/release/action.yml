@@ -1,0 +1,23 @@
+name: 'Release'
+description: 'Automates releases changelog using pull requests a'
+inputs:
+  file-name:
+    description: 'The file that should be updated (defaults to CHANGELOG.md)'
+    default: 'CHANGELOG.md'
+  target-branch:
+    description: 'The branch that releases are done on (defaults to main)'
+    default: 'main'
+  github-token:
+    description: 'Your GitHub token (defaults to using secrets.GITHUB_TOKEN)'
+    default: ${{ github.token }}
+  skip-github-release:
+    description: 'Skips GitHub release (defaults to false)'
+    default: 'false'
+outputs:
+  pr-created:
+    description: 'True when a PR is created'
+  release-created:
+    description: 'True when a GitHub release is created'
+runs:
+  using: 'node20'
+  main: 'dist/index.js'
