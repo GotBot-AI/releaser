@@ -32018,7 +32018,11 @@ function forcePushTag(tag) {
 }
 function fetchBranchWithTags(branchName) {
     return origin_awaiter(this, void 0, void 0, function* () {
-        yield execute(`git fetch origin ${branchName} --unshallow`);
+        const { stdout: isShallow } = yield execute(`git rev-parse --is-shallow-repository`, {
+            encoding: "utf-8",
+        });
+        const suffix = isShallow === "true" ? "--unshallow" : "";
+        yield execute(`git fetch origin ${branchName} ${suffix}`);
         yield execute(`git fetch --tags origin ${branchName}`);
     });
 }

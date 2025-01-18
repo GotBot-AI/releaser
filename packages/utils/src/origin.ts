@@ -9,6 +9,10 @@ export async function forcePushTag(tag: string) {
 }
 
 export async function fetchBranchWithTags(branchName: string) {
-    await execAsync(`git fetch origin ${branchName} --unshallow`);
+    const {stdout: isShallow} = await execAsync(`git rev-parse --is-shallow-repository`, {
+        encoding: "utf-8",
+    });
+    const suffix = isShallow === "true" ? "--unshallow" : "";
+    await execAsync(`git fetch origin ${branchName} ${suffix}`);
     await execAsync(`git fetch --tags origin ${branchName}`);
 }
