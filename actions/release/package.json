@@ -1,0 +1,19 @@
+{
+  "name": "@releaser/release",
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "exports": {
+    ".": "./dist/index.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "ncc build src/index.ts --license licenses.txt"
+  },
+  "dependencies": {
+    "@releaser/utils": "*"
+  }
+}

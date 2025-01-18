@@ -8,7 +8,11 @@ export async function forcePushTag(tag: string) {
     await execAsync(`git push ${tag} --force`);
 }
 
+export async function fetchOriginUnshallow() {
+    await execAsync(`git fetch origin --unshallow`);
+}
+
 export async function fetchBranchWithTags(branchName: string) {
-    await execAsync(`git fetch origin ${branchName} --unshallow`);
+    await execAsync(`git fetch origin ${branchName}`);
     await execAsync(`git fetch --tags origin ${branchName}`);
 }

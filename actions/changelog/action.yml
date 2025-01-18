@@ -1,0 +1,30 @@
+name: 'Changelog'
+description: 'Automates changelog using pull requests'
+inputs:
+  changelog-file-name:
+    description: 'The file that should be updated (defaults to CHANGELOG.md)'
+    default: 'CHANGELOG.md'
+  release-branch:
+    description: 'The branch that releases are done on (defaults to main)'
+    default: 'main'
+  source-branch:
+    description: 'The branch that changelogs are generated from'
+    required: true
+  github-token:
+    description: 'Your GitHub token (defaults to using secrets.GITHUB_TOKEN)'
+    default: ${{ github.token }}
+  breaking-change-commit-matchers:
+    description: 'List of regular expression used in finding breaking change commits to be included in the changelog (defaults to "BREAKING CHANGE")'
+    default: 'BREAKING CHANGE'
+  feature-commit-matchers:
+    description: 'List of regular expression used in finding feature commits to be included in the changelog (defaults to "^feature")'
+    default: '^feature'
+  bugfix-commit-matchers:
+    description: 'List of regular expression used in finding bugfix commits to be included in the changelog (defaults to "^bugfix")'
+    default: '^bugfix'
+outputs:
+  pr-created:
+    description: 'True when a PR is created'
+runs:
+  using: 'node20'
+  main: 'dist/index.js'

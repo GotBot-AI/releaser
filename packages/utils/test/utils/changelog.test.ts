@@ -1,9 +1,16 @@
 import * as fs from "fs";
-import * as changelog from '../../src/utils/changelog';
+import * as changelog from '../../src/changelog';
+import {ICommitMatchers} from "../../src";
 
 // Mock dependencies
 jest.mock('fs');
 jest.mock('child_process');
+
+const commitMatchers: ICommitMatchers = {
+    breakingChange: [],
+    feature: [],
+    bugfix: []
+}
 
 describe('changelog.ts', () => {
     beforeEach(() => {
@@ -15,7 +22,7 @@ describe('changelog.ts', () => {
         jest.mocked(fs.writeFileSync).mockImplementation(() => {
         });
 
-        changelog.updateChangelog("CHANGELOG.md", "v1.1.0", "v1.0.0");
+        changelog.updateChangelog("CHANGELOG.md", "v1.1.0", "v1.0.0", commitMatchers);
 
         expect(fs.writeFileSync).toHaveBeenCalledWith(
             'CHANGELOG.md',
@@ -26,12 +33,12 @@ describe('changelog.ts', () => {
     test('does not create a changelog file if it already exists', () => {
         jest.mocked(fs.existsSync).mockReturnValue(true);
 
-        changelog.updateChangelog("CHANGELOG.md", "v1.1.0", "v1.0.0");
+        changelog.updateChangelog("CHANGELOG.md", "v1.1.0", "v1.0.0", commitMatchers);
 
         expect(fs.writeFileSync).not.toHaveBeenCalled();
     });
 
-    test('updates the changelog with the new version', () => {
+    test('updates the changelog with the new utils', () => {
         jest.mocked(fs.readFileSync).mockImplementation(() => '## [v1.2.3] - 2024-12-31\n\n- fix: fix a bug\n');
         jest.mocked(fs.writeFileSync).mockImplementation(() => {
         });
@@ -49,7 +56,7 @@ describe('changelog.ts', () => {
         );
     });
 
-    test('removes existing changelog entries for the version before adding a new one', () => {
+    test('removes existing changelog entries for the utils before adding a new one', () => {
         jest.mocked(fs.readFileSync).mockImplementation(() =>
             '## [v1.3.0] - 2025-01-16\n- feat: add new feature\n- fix: fix a bug\n\n## [v1.2.3] - 2024-12-31\n\n- fix: fix a bug\n'
         );
