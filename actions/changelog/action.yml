@@ -16,8 +16,6 @@ inputs:
 outputs:
   pr-created:
     description: 'True when a PR is created'
-  release-created:
-    description: 'True when a GitHub release is created'
 runs:
   using: 'node20'
   main: 'dist/index.js'

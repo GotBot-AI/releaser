@@ -31958,7 +31958,7 @@ function buildVersionBlockRegex(version) {
     return new RegExp(`## \\[${version}\\](.*?)(?=## \\[|$)`, "gs");
 }
 function getExistingVersionLog(version, changelogFile) {
-    let changelog = external_fs_.readFileSync(changelogFile, "utf-8");
+    let changelog = fs.readFileSync(changelogFile, "utf-8");
     const versionBlockRegex = buildVersionBlockRegex(version);
     const matches = changelog.match(versionBlockRegex);
     return matches ? matches[0] : "";
@@ -32122,12 +32122,13 @@ function main() {
             const sourceBranch = core.getInput("source-branch");
             const changelogBranch = `changelog--branch-${targetBranch}`;
             const githubToken = core.getInput("github-token");
-            const skipGithubRelease = core.getInput("skip-github-release");
             const octokit = github.getOctokit(githubToken);
             // !!These need to be placed here before any other git commands are run!!
             yield setupLocalUser();
+            yield fetchBranchWithTags(sourceBranch);
             yield fetchBranchWithTags(targetBranch);
-            const lastCommitSHA = yield getLastCommitSHA(targetBranch);
+            const lastCommitSHA = yield getLastCommitSHA(sourceBranch);
+            core.info(`Source branch is ${sourceBranch}.`);
             const prevVersion = yield getLastVersionTag(targetBranch);
             let newVersion = "v1.0.0";
             if (prevVersion === null) {
@@ -32143,65 +32144,29 @@ function main() {
                 owner: owner,
                 repo: repo,
             });
-            core.info(`Checking for merged release pull request corresponding to ${lastCommitSHA}.`);
+            core.info(`Checking for merged changelog pull request corresponding to ${lastCommitSHA}.`);
             const prs = yield octokit.rest.search.issuesAndPullRequests({
-                q: `repo:${owner}/${repo} is:pr is:merged ${lastCommitSHA} base:${targetBranch} head:${changelogBranch}`,
+                q: `repo:${owner}/${repo} is:pr is:merged ${lastCommitSHA} base:${sourceBranch} head:${changelogBranch}`,
             });
             const mergedReleasePRs = prs.data.items;
             // Release Step
             if (mergedReleasePRs.length > 0) {
-                const pr = mergedReleasePRs[0]; // Assuming the first result is the match
-                core.info(`Creating tag for ${lastCommitSHA}.`);
-                const { data: tag } = yield octokit.rest.git.createTag({
-                    owner,
-                    repo,
-                    tag: newVersion,
-                    message: `Tagging commit for PR #${pr.number}`,
-                    object: lastCommitSHA,
-                    type: "commit",
-                });
-                core.info(`Created tag: ${tag.tag}`);
-                core.info(`Creating reference for "${newVersion}" on "${lastCommitSHA}"...`);
-                const { data: ref } = yield octokit.rest.git.createRef({
-                    owner,
-                    repo,
-                    ref: `refs/tags/${newVersion}`,
-                    sha: lastCommitSHA,
-                });
-                core.info(`Created reference: ${ref.ref}`);
-                if (skipGithubRelease !== "true") {
-                    core.info(`Creating GitHub release for "${newVersion}"...`);
-                    const { data: release } = yield octokit.rest.repos.createRelease({
-                        owner,
-                        repo,
-                        tag_name: newVersion,
-                        name: newVersion,
-                        body: getExistingVersionLog(newVersion, fileName),
-                        draft: false,
-                        prerelease: false,
-                    });
-                    console.log(`Created release: ${release.html_url}`);
-                    core.setOutput("release-created", true);
-                }
-                else {
-                    core.setOutput("release-created", false);
-                }
-                core.setOutput("pr-created", false);
+                // const pr = mergedReleasePRs[0]; // Assuming the first result is the match
                 return;
             }
             // Release Preparation Step
             else {
-                core.info("No corresponding merged release pull request found.");
-                const releaseBranchExists = branches.some((branch) => branch.name === changelogBranch);
-                if (releaseBranchExists) {
-                    core.info(`Branch "${changelogBranch}" already exists. Resetting "${changelogBranch}" to match "${targetBranch}"...`);
-                    yield resetBranchToBranch(changelogBranch, targetBranch);
-                    core.info(`Branch "${changelogBranch}" has been reset to "${targetBranch}".`);
+                core.info("No corresponding merged changelog pull request found.");
+                const changelogBranchExists = branches.some((branch) => branch.name === changelogBranch);
+                if (changelogBranchExists) {
+                    core.info(`Branch "${changelogBranch}" already exists. Resetting "${changelogBranch}" to match "${sourceBranch}"...`);
+                    yield resetBranchToBranch(changelogBranch, sourceBranch);
+                    core.info(`Branch "${changelogBranch}" has been reset to "${sourceBranch}".`);
                 }
                 else {
-                    core.info(`Creating branch "${changelogBranch}" from "${targetBranch}"...`);
-                    yield createBranch(changelogBranch, targetBranch);
-                    core.info(`Branch "${changelogBranch}" has been created from "${targetBranch}".`);
+                    core.info(`Creating branch "${changelogBranch}" from "${sourceBranch}"...`);
+                    yield createBranch(changelogBranch, sourceBranch);
+                    core.info(`Branch "${changelogBranch}" has been created from "${sourceBranch}".`);
                 }
                 yield updateChangelog(fileName, newVersion, prevVersion);
                 yield forcePushCommits(changelogBranch);
@@ -32209,26 +32174,25 @@ function main() {
                     owner: owner,
                     repo: repo,
                     head: `${owner}:${changelogBranch}`,
-                    base: targetBranch,
+                    base: sourceBranch,
                 });
                 if (existingPrs.length === 0) {
-                    core.info(`Creating a new PR from "${changelogBranch}" to "${targetBranch}"...`);
+                    core.info(`Creating a new PR from "${changelogBranch}" to "${sourceBranch}"...`);
                     yield octokit.rest.pulls.create({
                         owner: owner,
                         repo: repo,
-                        title: `PR to merge "${changelogBranch}" into ${targetBranch}`,
+                        title: `PR to merge "${changelogBranch}" into ${sourceBranch}`,
                         head: changelogBranch,
-                        base: targetBranch,
+                        base: sourceBranch,
                         body: 'This PR contains release-related changes applied to the branch.',
                     });
-                    core.info(`PR to merge "${changelogBranch}" into ${targetBranch} has been created.`);
+                    core.info(`PR to merge "${changelogBranch}" into ${sourceBranch} has been created.`);
                     core.setOutput("pr-created", true);
                 }
                 else {
                     core.setOutput("pr-created", false);
                 }
-                core.info(`Branch "${changelogBranch}" is now in sync with "${targetBranch}", and the PR is updated.`);
-                core.setOutput("release-created", false);
+                core.info(`Branch "${changelogBranch}" is now in sync with "${sourceBranch}", and the PR is updated.`);
             }
         }
         catch (error) {

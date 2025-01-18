@@ -26,7 +26,8 @@ async function main() {
         await setupLocalUser();
         await fetchBranchWithTags(sourceBranch);
         await fetchBranchWithTags(targetBranch);
-        const lastCommitSHA = await getLastCommitSHA(targetBranch);
+        const lastCommitSHA = await getLastCommitSHA(sourceBranch);
+        core.info(`Source branch is ${sourceBranch}.`);
 
         const prevVersion = await getLastVersionTag(targetBranch);
         let newVersion = "v1.0.0";
@@ -44,9 +45,9 @@ async function main() {
             repo: repo,
         });
 
-        core.info(`Checking for merged release pull request corresponding to ${lastCommitSHA}.`);
+        core.info(`Checking for merged changelog pull request corresponding to ${lastCommitSHA}.`);
         const prs = await octokit.rest.search.issuesAndPullRequests({
-            q: `repo:${owner}/${repo} is:pr is:merged ${lastCommitSHA} base:${targetBranch} head:${changelogBranch}`,
+            q: `repo:${owner}/${repo} is:pr is:merged ${lastCommitSHA} base:${sourceBranch} head:${changelogBranch}`,
         });
 
         const mergedReleasePRs = prs.data.items;
@@ -57,16 +58,16 @@ async function main() {
         }
         // Release Preparation Step
         else {
-            core.info("No corresponding merged release pull request found.");
-            const releaseBranchExists = branches.some((branch) => branch.name === changelogBranch);
-            if (releaseBranchExists) {
-                core.info(`Branch "${changelogBranch}" already exists. Resetting "${changelogBranch}" to match "${targetBranch}"...`);
-                await resetBranchToBranch(changelogBranch, targetBranch);
-                core.info(`Branch "${changelogBranch}" has been reset to "${targetBranch}".`);
+            core.info("No corresponding merged changelog pull request found.");
+            const changelogBranchExists = branches.some((branch) => branch.name === changelogBranch);
+            if (changelogBranchExists) {
+                core.info(`Branch "${changelogBranch}" already exists. Resetting "${changelogBranch}" to match "${sourceBranch}"...`);
+                await resetBranchToBranch(changelogBranch, sourceBranch);
+                core.info(`Branch "${changelogBranch}" has been reset to "${sourceBranch}".`);
             } else {
-                core.info(`Creating branch "${changelogBranch}" from "${targetBranch}"...`);
-                await createBranch(changelogBranch, targetBranch);
-                core.info(`Branch "${changelogBranch}" has been created from "${targetBranch}".`);
+                core.info(`Creating branch "${changelogBranch}" from "${sourceBranch}"...`);
+                await createBranch(changelogBranch, sourceBranch);
+                core.info(`Branch "${changelogBranch}" has been created from "${sourceBranch}".`);
             }
 
             await updateChangelog(fileName, newVersion, prevVersion);
@@ -76,26 +77,25 @@ async function main() {
                 owner: owner,
                 repo: repo,
                 head: `${owner}:${changelogBranch}`,
-                base: targetBranch,
+                base: sourceBranch,
             });
 
             if (existingPrs.length === 0) {
-                core.info(`Creating a new PR from "${changelogBranch}" to "${targetBranch}"...`);
+                core.info(`Creating a new PR from "${changelogBranch}" to "${sourceBranch}"...`);
                 await octokit.rest.pulls.create({
                     owner: owner,
                     repo: repo,
-                    title: `PR to merge "${changelogBranch}" into ${targetBranch}`,
+                    title: `PR to merge "${changelogBranch}" into ${sourceBranch}`,
                     head: changelogBranch,
-                    base: targetBranch,
+                    base: sourceBranch,
                     body: 'This PR contains release-related changes applied to the branch.',
                 });
-                core.info(`PR to merge "${changelogBranch}" into ${targetBranch} has been created.`);
+                core.info(`PR to merge "${changelogBranch}" into ${sourceBranch} has been created.`);
                 core.setOutput("pr-created", true);
             } else {
                 core.setOutput("pr-created", false);
             }
-            core.info(`Branch "${changelogBranch}" is now in sync with "${targetBranch}", and the PR is updated.`);
-            core.setOutput("release-created", false);
+            core.info(`Branch "${changelogBranch}" is now in sync with "${sourceBranch}", and the PR is updated.`);
         }
     } catch (error: any) {
         core.error(error)
