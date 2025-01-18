@@ -70,9 +70,6 @@ async function main() {
         } else {
             core.setOutput("release-created", false);
         }
-
-        core.setOutput("pr-created", false);
-
     } catch (error: any) {
         core.error(error)
         core.setFailed(error.message);

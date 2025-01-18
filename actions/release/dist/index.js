@@ -32172,7 +32172,6 @@ function main() {
             else {
                 core.setOutput("release-created", false);
             }
-            core.setOutput("pr-created", false);
         }
         catch (error) {
             core.error(error);
