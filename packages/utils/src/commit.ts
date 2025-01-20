@@ -10,7 +10,7 @@ export async function getCommitsSince(start: string | null, matchers: string[], 
     const {stdout: commits} = await execAsync(command, {
         encoding: "utf-8",
     })
-    return commits.trim();
+    return commits?.trim();
 }
 
 export async function getLastCommitSHA(branch: string) {

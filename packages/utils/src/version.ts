@@ -7,7 +7,7 @@ export async function getLastVersionTag(branch: string) {
         const latestTag = await execAsync(`git describe --tags --abbrev=0 --match "v*" origin/${branch}`, {
             encoding: "utf-8",
         })
-        return latestTag.stdout.trim();
+        return latestTag.stdout?.trim();
     } catch (error) {
         return null;
     }

@@ -31891,7 +31891,7 @@ function resetBranchToBranch(branchName, targetBranch) {
 function branchContainsCommit(branchName, commitSHA) {
     return __awaiter(this, void 0, void 0, function* () {
         const { stdout } = yield execute(`git branch --contains ${commitSHA}`);
-        return stdout.trim().includes(branchName);
+        return stdout === null || stdout === void 0 ? void 0 : stdout.trim().includes(branchName);
     });
 }
 
@@ -31919,7 +31919,7 @@ function commit_getCommitsSince(start_1, matchers_1) {
         const { stdout: commits } = yield execAsync(command, {
             encoding: "utf-8",
         });
-        return commits.trim();
+        return commits === null || commits === void 0 ? void 0 : commits.trim();
     });
 }
 function getLastCommitSHA(branch) {
@@ -32082,11 +32082,12 @@ var version_awaiter = (undefined && undefined.__awaiter) || function (thisArg, _
 
 function getLastVersionTag(branch) {
     return version_awaiter(this, void 0, void 0, function* () {
+        var _a;
         try {
             const latestTag = yield execAsync(`git describe --tags --abbrev=0 --match "v*" origin/${branch}`, {
                 encoding: "utf-8",
             });
-            return latestTag.stdout.trim();
+            return (_a = latestTag.stdout) === null || _a === void 0 ? void 0 : _a.trim();
         }
         catch (error) {
             return null;
