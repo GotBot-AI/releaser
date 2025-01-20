@@ -31968,7 +31968,7 @@ function getVersionBlockRegex(version) {
     return new RegExp(`## \\[${version}\\](.*?)(?=## \\[|$)`, "gs");
 }
 function getExistingVersionLog(version, changelogFile) {
-    let changelog = fs.readFileSync(changelogFile, "utf-8");
+    let changelog = external_fs_.readFileSync(changelogFile, "utf-8");
     const versionBlockRegex = getVersionBlockRegex(version);
     const matches = changelog.match(versionBlockRegex);
     return matches ? matches[0] : "";
@@ -32223,12 +32223,20 @@ function main() {
                         title: `PR to merge "${changelogBranch}" into ${sourceBranch}`,
                         head: changelogBranch,
                         base: sourceBranch,
-                        body: 'This PR contains release-related changes applied to the branch.',
+                        body: getExistingVersionLog(newVersion, changelogFileName),
                     });
                     core.info(`PR to merge "${changelogBranch}" into ${sourceBranch} has been created.`);
                     core.setOutput("pr-created", true);
                 }
                 else {
+                    core.info(`Updating a new PR from "${changelogBranch}" to "${sourceBranch}"...`);
+                    yield octokit.rest.pulls.update({
+                        owner: owner,
+                        repo: repo,
+                        pull_number: existingPrs[0].number,
+                        body: getExistingVersionLog(newVersion, changelogFileName),
+                    });
+                    core.info(`PR to merge "${changelogBranch}" into ${sourceBranch} has been updated.`);
                     core.setOutput("pr-created", false);
                 }
                 core.info(`Branch "${changelogBranch}" is now in sync with "${sourceBranch}", and the PR is updated.`);
