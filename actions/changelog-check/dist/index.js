@@ -32001,11 +32001,10 @@ function updateChangelog(fileName_1, newVersion_1, prevVersion_1, _a) {
             const cleanCommitMessages = commits
                 .split(/\n/)
                 .map(commit => {
-                var _a;
                 // Clean up commit messages
                 const commitParts = commit.split(":", 2);
-                if (commit.length > 1)
-                    return `- ${(_a = commitParts[1]) === null || _a === void 0 ? void 0 : _a.trim()}`;
+                if (commitParts.length > 1)
+                    return `- ${commitParts[1].trim()}`;
                 return commitParts[0];
             });
             const uniqueCommitMessages = [...new Set(cleanCommitMessages)];
