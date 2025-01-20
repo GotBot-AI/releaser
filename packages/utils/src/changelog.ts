@@ -73,7 +73,7 @@ export async function updateChangelog(
             .map(commit => {
                 // Clean up commit messages
                 const commitParts = commit.split(":", 2);
-                if (commit.length > 1) return `- ${commitParts[1].trim()}`;
+                if (commit.length > 1) return `- ${commitParts[1]?.trim()}`;
                 return commitParts[0];
             });
         const uniqueCommitMessages = [...new Set(cleanCommitMessages)];
