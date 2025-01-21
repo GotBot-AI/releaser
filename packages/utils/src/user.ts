@@ -1,6 +1,6 @@
-import execAsync from "./execute";
+import {execFileAsync} from "./execute";
 
 export async function setupLocalUser() {
-    await execAsync(`git config --local user.email "action@github.com"`);
-    await execAsync(`git config --local user.name "GitHub Action"`);
+    await execFileAsync("git", ["config", "--local", "user.email", "action@github.com"]);
+    await execFileAsync("git", ["config", "--local", "user.name", "GitHub Action"]);
 }

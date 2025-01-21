@@ -1,6 +1,17 @@
-import {exec} from 'child_process';
+import {ChildProcessWithoutNullStreams, execFile} from 'child_process';
 import util from 'util';
 
-const execAsync = util.promisify(exec);
+export const execFileAsync = util.promisify(execFile);
 
-export default execAsync;
+export const promisifySpawn = (inputSpawn: ChildProcessWithoutNullStreams): Promise<string> => {
+    return new Promise((resolve, reject) => {
+        let output = "";
+        inputSpawn.stdout.on("data", (data) => (output += data.toString()));
+        inputSpawn.on("error", reject);
+        inputSpawn.on("close", (code) => {
+            code === 0
+                ? resolve(output)
+                : reject(new Error(`grep process exited with code ${code}`));
+        });
+    });
+}

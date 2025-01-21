@@ -1,5 +1,5 @@
 import * as fs from "fs";
-import execAsync from "./execute";
+import {execFileAsync} from "./execute";
 import {getCommitsSince} from "./commit";
 import {ICommitMatchers} from "./interfaces";
 
@@ -82,8 +82,8 @@ export async function updateChangelog(
         changelog(newVersion, date, uniqueCommitMessages.join("\n"), fileName);
         console.log(`Changelog updated for version ${newVersion}`);
 
-        await execAsync(`git add ${fileName}`);
+        await execFileAsync("git", ["add", fileName]);
     }
 
-    await execAsync(`git commit --allow-empty -m "Prepared changelog"`);
+    await execFileAsync("git", ["commit", "--allow-empty", "-m", "Prepared changelog"]);
 }
