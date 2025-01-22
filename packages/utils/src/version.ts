@@ -1,10 +1,10 @@
 import {getCommitsSince} from "./commit";
-import execAsync from "./execute";
+import {execFileAsync} from "./execute";
 import {ICommitMatchers} from "./interfaces";
 
 export async function getLastVersionTag(branch: string) {
     try {
-        const latestTag = await execAsync(`git describe --tags --abbrev=0 --match "v*" origin/${branch}`, {
+        const latestTag = await execFileAsync("git", ["describe", "--tags", "--abbrev=0", "--match", "v*", `origin/${branch}`], {
             encoding: "utf-8",
         })
         return latestTag.stdout?.trim();

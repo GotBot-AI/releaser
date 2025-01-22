@@ -31856,8 +31856,19 @@ var external_util_default = /*#__PURE__*/__nccwpck_require__.n(external_util_);
 ;// CONCATENATED MODULE: ../../packages/utils/dist/execute.js
 
 
-const execute_execAsync = external_util_default().promisify(external_child_process_.exec);
-/* harmony default export */ const execute = (execute_execAsync);
+const execute_execFileAsync = external_util_default().promisify(external_child_process_.execFile);
+const execute_promisifySpawn = (inputSpawn) => {
+    return new Promise((resolve, reject) => {
+        let output = "";
+        inputSpawn.stdout.on("data", (data) => (output += data.toString()));
+        inputSpawn.on("error", reject);
+        inputSpawn.on("close", (code) => {
+            code === 0
+                ? resolve(output)
+                : reject(new Error(`grep process exited with code ${code}`));
+        });
+    });
+};
 
 ;// CONCATENATED MODULE: ../../packages/utils/dist/branch.js
 var __awaiter = (undefined && undefined.__awaiter) || function (thisArg, _arguments, P, generator) {
@@ -31872,25 +31883,25 @@ var __awaiter = (undefined && undefined.__awaiter) || function (thisArg, _argume
 
 function checkoutBranch(branchName) {
     return __awaiter(this, void 0, void 0, function* () {
-        yield execute(`git checkout ${branchName}`);
+        yield execute_execFileAsync("git", ["checkout", branchName]);
     });
 }
 function createAndCheckoutBranch(branchName, baseBranch) {
     return __awaiter(this, void 0, void 0, function* () {
-        yield execAsync(`git checkout ${baseBranch}`);
-        yield execAsync(`git pull origin ${baseBranch}`);
-        yield execAsync(`git checkout -b ${branchName}`);
+        yield execFileAsync("git", ["checkout", baseBranch]);
+        yield execFileAsync("git", ["pull", "origin", baseBranch]);
+        yield execFileAsync("git", ["checkout", "-b", branchName]);
     });
 }
 function resetBranchToBranch(branchName, targetBranch) {
     return __awaiter(this, void 0, void 0, function* () {
-        yield execAsync(`git pull origin ${branchName}`);
-        yield execAsync(`git reset --hard origin/${targetBranch}`);
+        yield execFileAsync("git", ["pull", "origin", branchName]);
+        yield execFileAsync("git", ["reset", "--hard", `origin/${targetBranch}`]);
     });
 }
 function branchContainsCommit(branchName, commitSHA) {
     return __awaiter(this, void 0, void 0, function* () {
-        const { stdout } = yield execute(`git branch --contains ${commitSHA}`);
+        const { stdout } = yield execute_execFileAsync("git", ["branch", "--contains", commitSHA]);
         return stdout === null || stdout === void 0 ? void 0 : stdout.trim().includes(branchName);
     });
 }
@@ -31908,27 +31919,31 @@ var commit_awaiter = (undefined && undefined.__awaiter) || function (thisArg, _a
     });
 };
 
+
 function commit_getCommitsSince(start_1, matchers_1) {
     return commit_awaiter(this, arguments, void 0, function* (start, matchers, maxCount = -1) {
         const range = start === null ? "" : `${start}..HEAD`;
         const maxCountParam = maxCount > -1 ? `--max-count=${maxCount}` : "";
-        let matcherStringForGit = matchers.map(matcher => `--grep="${matcher}"`).join(" ");
-        if (matcherStringForGit)
-            matcherStringForGit += " -E";
-        let grepPipe = matchers.map(matcher => `-e "${matcher}"`).join(" ");
-        if (grepPipe)
-            grepPipe = "| grep -E -i " + grepPipe;
-        const command = `git log ${range} --pretty=format:"%s%n%b" --reverse ${matcherStringForGit} --regexp-ignore-case ${maxCountParam} ${grepPipe}`;
-        const { stdout: commits } = yield execAsync(command, {
-            encoding: "utf-8",
-        });
+        const gitlog = spawn("git", ["log", range, "--pretty=format:%s%n%b", "--reverse", "-E", ...matchers.map(matcher => `--grep=${matcher}`), "--regexp-ignore-case", maxCountParam]);
+        let commits = yield promisifySpawn(gitlog);
+        if (matchers.length > 0) {
+            const args = ["-E", "-i"];
+            matchers.forEach((matcher) => {
+                args.push("-e");
+                args.push(matcher);
+            });
+            const grep = spawn("grep", args);
+            grep.stdin.write(commits);
+            grep.stdin.end();
+            commits = yield promisifySpawn(grep);
+        }
         return commits.trim();
     });
 }
 function getLastCommitSHA(branch) {
     return commit_awaiter(this, void 0, void 0, function* () {
         var _a;
-        const sha = yield execute(`git log -n 1 --pretty=format:"%H" "${branch}"`, {
+        const sha = yield execute_execFileAsync("git", ["log", "-n", "1", "--pretty=format:%H", branch], {
             encoding: "utf-8",
         });
         return (_a = sha.stdout) === null || _a === void 0 ? void 0 : _a.trim();
@@ -31937,7 +31952,7 @@ function getLastCommitSHA(branch) {
 function forceTagCommit(tag, commitSHA) {
     return commit_awaiter(this, void 0, void 0, function* () {
         var _a;
-        const sha = yield execAsync(`git tag -f ${tag} "${commitSHA}"`, {
+        const sha = yield execFileAsync("git", ["tag", "-f", tag, commitSHA], {
             encoding: "utf-8",
         });
         return (_a = sha.stdout) === null || _a === void 0 ? void 0 : _a.trim();
@@ -32014,9 +32029,9 @@ function updateChangelog(fileName_1, newVersion_1, prevVersion_1, _a) {
             console.log(`Updating changelog for version ${newVersion}`);
             changelog(newVersion, date, uniqueCommitMessages.join("\n"), fileName);
             console.log(`Changelog updated for version ${newVersion}`);
-            yield execAsync(`git add ${fileName}`);
+            yield execFileAsync("git", ["add", fileName]);
         }
-        yield execAsync(`git commit --allow-empty -m "Prepared changelog"`);
+        yield execFileAsync("git", ["commit", "--allow-empty", "-m", "Prepared changelog"]);
     });
 }
 
@@ -32033,23 +32048,18 @@ var origin_awaiter = (undefined && undefined.__awaiter) || function (thisArg, _a
 
 function forcePushCommits(branchName) {
     return origin_awaiter(this, void 0, void 0, function* () {
-        yield execAsync(`git push origin ${branchName} --force`);
-    });
-}
-function forcePushTag(tag) {
-    return origin_awaiter(this, void 0, void 0, function* () {
-        yield execAsync(`git push ${tag} --force`);
+        yield execFileAsync("git", ["push", "origin", branchName, "--force"]);
     });
 }
 function fetchOriginUnshallow() {
     return origin_awaiter(this, void 0, void 0, function* () {
-        yield execute(`git fetch origin --unshallow`);
+        yield execute_execFileAsync("git", ["fetch", "origin", "--unshallow"]);
     });
 }
 function fetchBranchWithTags(branchName) {
     return origin_awaiter(this, void 0, void 0, function* () {
-        yield execute(`git fetch origin ${branchName}`);
-        yield execute(`git fetch --tags origin ${branchName}`);
+        yield execute_execFileAsync("git", ["fetch", "origin", branchName]);
+        yield execute_execFileAsync("git", ["fetch", "--tags", "origin", branchName]);
     });
 }
 
@@ -32066,8 +32076,8 @@ var user_awaiter = (undefined && undefined.__awaiter) || function (thisArg, _arg
 
 function setupLocalUser() {
     return user_awaiter(this, void 0, void 0, function* () {
-        yield execute(`git config --local user.email "action@github.com"`);
-        yield execute(`git config --local user.name "GitHub Action"`);
+        yield execute_execFileAsync("git", ["config", "--local", "user.email", "action@github.com"]);
+        yield execute_execFileAsync("git", ["config", "--local", "user.name", "GitHub Action"]);
     });
 }
 
@@ -32087,7 +32097,7 @@ function getLastVersionTag(branch) {
     return version_awaiter(this, void 0, void 0, function* () {
         var _a;
         try {
-            const latestTag = yield execAsync(`git describe --tags --abbrev=0 --match "v*" origin/${branch}`, {
+            const latestTag = yield execFileAsync("git", ["describe", "--tags", "--abbrev=0", "--match", "v*", `origin/${branch}`], {
                 encoding: "utf-8",
             });
             return (_a = latestTag.stdout) === null || _a === void 0 ? void 0 : _a.trim();

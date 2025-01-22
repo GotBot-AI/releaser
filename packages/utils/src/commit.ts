@@ -1,32 +1,41 @@
-import execAsync from "./execute";
+import {execFileAsync, promisifySpawn} from "./execute";
+import {spawn} from "child_process";
 
 export async function getCommitsSince(start: string | null, matchers: string[], maxCount: number = -1) {
     const range = start === null ? "" : `${start}..HEAD`;
     const maxCountParam = maxCount > -1 ? `--max-count=${maxCount}` : "";
 
-    let matcherStringForGit = matchers.map(matcher => `--grep="${matcher}"`).join(" ")
-    if (matcherStringForGit) matcherStringForGit += " -E"
+    const gitlog = spawn(
+        "git",
+        ["log", range, "--pretty=format:%s%n%b", "--reverse", "-E", ...matchers.map(matcher => `--grep=${matcher}`), "--regexp-ignore-case", maxCountParam]
+    )
+    let commits = await promisifySpawn(gitlog);
+    if (matchers.length > 0) {
+        const args = ["-E", "-i"];
+        matchers.forEach((matcher) => {
+            args.push("-e");
+            args.push(matcher);
+        });
+        const grep = spawn("grep", args);
 
-    let grepPipe = matchers.map(matcher => `-e "${matcher}"`).join(" ")
-    if (grepPipe) grepPipe = "| grep -E -i " + grepPipe;
+        grep.stdin.write(commits);
+        grep.stdin.end();
 
-    const command = `git log ${range} --pretty=format:"%s%n%b" --reverse ${matcherStringForGit} --regexp-ignore-case ${maxCountParam} ${grepPipe}`;
-    const {stdout: commits} = await execAsync(command, {
-        encoding: "utf-8",
-    })
+        commits = await promisifySpawn(grep);
+    }
     return commits.trim();
 }
 
 export async function getLastCommitSHA(branch: string) {
-    const sha = await execAsync(`git log -n 1 --pretty=format:"%H" "${branch}"`, {
+    const sha = await execFileAsync("git", ["log", "-n", "1", "--pretty=format:%H", branch], {
         encoding: "utf-8",
-    })
+    });
     return sha.stdout?.trim();
 }
 
 export async function forceTagCommit(tag: string, commitSHA: string) {
-    const sha = await execAsync(`git tag -f ${tag} "${commitSHA}"`, {
+    const sha = await execFileAsync("git", ["tag", "-f", tag, commitSHA], {
         encoding: "utf-8",
-    })
+    });
     return sha.stdout?.trim();
 }
