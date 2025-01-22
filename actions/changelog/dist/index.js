@@ -31922,9 +31922,16 @@ var commit_awaiter = (undefined && undefined.__awaiter) || function (thisArg, _a
 
 function getCommitsSince(start_1, matchers_1) {
     return commit_awaiter(this, arguments, void 0, function* (start, matchers, maxCount = -1) {
-        const range = start === null ? "" : `${start}..HEAD`;
-        const maxCountParam = maxCount > -1 ? `--max-count=${maxCount}` : "";
-        const gitlog = (0,external_child_process_.spawn)("git", ["log", range, "--pretty=format:%s%n%b", "--reverse", "-E", ...matchers.map(matcher => `--grep=${matcher}`), "--regexp-ignore-case", maxCountParam]);
+        const gitlog = (0,external_child_process_.spawn)("git", [
+            "log",
+            ...start === null ? [] : [`${start}..HEAD`],
+            "--pretty=format:%s%n%b",
+            "--reverse",
+            "-E",
+            ...matchers.map(matcher => `--grep=${matcher}`),
+            "--regexp-ignore-case",
+            ...maxCount > -1 ? [`--max-count=${maxCount}`] : []
+        ]);
         let commits = yield promisifySpawn(gitlog);
         if (matchers.length > 0) {
             const args = ["-E", "-i"];
@@ -32158,7 +32165,7 @@ var src_awaiter = (undefined && undefined.__awaiter) || function (thisArg, _argu
 function main() {
     return src_awaiter(this, void 0, void 0, function* () {
         try {
-            core.info(`Running changelog action"...`);
+            core.info("Running changelog action...");
             const changelogFileName = core.getInput("changelog-file-name");
             const releaseBranch = core.getInput("release-branch");
             const sourceBranch = core.getInput("source-branch");
