@@ -2,12 +2,18 @@ import {execFileAsync, promisifySpawn} from "./execute";
 import {spawn} from "child_process";
 
 export async function getCommitsSince(start: string | null, matchers: string[], maxCount: number = -1) {
-    const range = start === null ? "" : `${start}..HEAD`;
-    const maxCountParam = maxCount > -1 ? `--max-count=${maxCount}` : "";
-
     const gitlog = spawn(
         "git",
-        ["log", range, "--pretty=format:%s%n%b", "--reverse", "-E", ...matchers.map(matcher => `--grep=${matcher}`), "--regexp-ignore-case", maxCountParam]
+        [
+            "log",
+            ...start === null ? [] : [`${start}..HEAD`],
+            "--pretty=format:%s%n%b",
+            "--reverse",
+            "-E",
+            ...matchers.map(matcher => `--grep=${matcher}`),
+            "--regexp-ignore-case",
+            ...maxCount > -1 ? [`--max-count=${maxCount}`] : []
+        ]
     )
     let commits = await promisifySpawn(gitlog);
     if (matchers.length > 0) {

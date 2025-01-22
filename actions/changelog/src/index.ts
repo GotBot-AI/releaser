@@ -16,7 +16,7 @@ import {
 
 async function main() {
     try {
-        core.info(`Running changelog action"...`);
+        core.info("Running changelog action...");
         const changelogFileName = core.getInput("changelog-file-name");
         const releaseBranch = core.getInput("release-branch");
         const sourceBranch = core.getInput("source-branch");
