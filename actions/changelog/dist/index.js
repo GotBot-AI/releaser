@@ -32169,13 +32169,17 @@ function main() {
             const changelogFileName = core.getInput("changelog-file-name");
             const releaseBranch = core.getInput("release-branch");
             const sourceBranch = core.getInput("source-branch");
+            const includeDefaultCommitMatchers = core.getInput("include-default-commit-matchers") === "true";
+            const defaultBreakingChangeCommitMatchers = ["BREAKING CHANGE"];
             const breakingChangeCommitMatchers = core.getInput("breaking-change-commit-matchers").split("\n");
+            const defaultFeatureCommitMatchers = ["^feature/[a-zA-Z0-9 -]+:", "^feat/[a-zA-Z0-9 -]+:"];
             const featureCommitMatchers = core.getInput("feature-commit-matchers").split("\n");
+            const defaultBugfixCommitMatchers = ["^feature/[a-zA-Z0-9 -]+ (PATCH):", "^bugfix/[a-zA-Z0-9 -]+:", "^fix/[a-zA-Z0-9 -]+:", "^(PATCH)"];
             const bugfixCommitMatchers = core.getInput("bugfix-commit-matchers").split("\n");
             const commitMatchers = {
-                breakingChange: breakingChangeCommitMatchers,
-                feature: featureCommitMatchers,
-                bugfix: bugfixCommitMatchers
+                breakingChange: [...new Set(breakingChangeCommitMatchers.concat(includeDefaultCommitMatchers ? defaultBreakingChangeCommitMatchers : []))],
+                feature: [...new Set(featureCommitMatchers.concat(includeDefaultCommitMatchers ? defaultFeatureCommitMatchers : []))],
+                bugfix: [...new Set(bugfixCommitMatchers.concat(includeDefaultCommitMatchers ? defaultBugfixCommitMatchers : []))],
             };
             const changelogBranch = `changelog--branch-${sourceBranch}`;
             const githubToken = core.getInput("github-token");

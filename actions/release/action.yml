@@ -14,14 +14,17 @@ inputs:
     description: 'List of regular expression used in finding breaking change commits to be included in the changelog (defaults to "BREAKING CHANGE")'
     default: 'BREAKING CHANGE'
   feature-commit-matchers:
-    description: 'List of regular expression used in finding feature commits to be included in the changelog (defaults to "^feature")'
+    description: 'List of regular expressions used in finding feature commits to be included in the changelog (defaults to "^feature")'
     default: '^feature'
   bugfix-commit-matchers:
-    description: 'List of regular expression used in finding bugfix commits to be included in the changelog (defaults to "^bugfix")'
+    description: 'List of regular expressions used in finding bugfix commits to be included in the changelog (defaults to "^bugfix")'
     default: '^bugfix'
   skip-github-release:
     description: 'Skips GitHub release (defaults to false)'
     default: 'false'
+  include-default-commit-matchers:
+    description: 'Includes default regular expressions used in finding commits (defaults to true)'
+    default: 'true'
 outputs:
   release-created:
     description: 'True when a GitHub release is created'
