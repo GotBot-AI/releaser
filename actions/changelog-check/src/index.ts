@@ -23,8 +23,6 @@ async function main() {
         await checkoutBranch(sourceBranch)
         await fetchBranchWithTags(sourceBranch);
         const lastSourceBranchCommitSHA = await getLastCommitSHA(sourceBranch);
-        await checkoutBranch(changelogBranch)
-        const lastChangelogBranchCommitSHA = await getLastCommitSHA(changelogBranch);
         const {owner, repo} = github.context.repo;
 
         core.info(`Checking for merged changelog pull request corresponding to ${lastSourceBranchCommitSHA}.`);
@@ -39,6 +37,8 @@ async function main() {
             core.setOutput("changelog-is-synced", true);
         } else {
             core.info(`No corresponding merged changelog pull request found. Checking if ${changelogBranch} contains latest changes from ${sourceBranch}`);
+            await checkoutBranch(changelogBranch)
+            const lastChangelogBranchCommitSHA = await getLastCommitSHA(changelogBranch);
             const changelogBranchUpToDate = await branchContainsCommit(changelogBranch, lastSourceBranchCommitSHA);
             if (!changelogBranchUpToDate) {
                 core.setOutput("changelog-is-synced", false);

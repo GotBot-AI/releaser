@@ -32176,8 +32176,6 @@ function main() {
             yield checkoutBranch(sourceBranch);
             yield fetchBranchWithTags(sourceBranch);
             const lastSourceBranchCommitSHA = yield getLastCommitSHA(sourceBranch);
-            yield checkoutBranch(changelogBranch);
-            const lastChangelogBranchCommitSHA = yield getLastCommitSHA(changelogBranch);
             const { owner, repo } = github.context.repo;
             core.info(`Checking for merged changelog pull request corresponding to ${lastSourceBranchCommitSHA}.`);
             const prs = yield octokit.rest.search.issuesAndPullRequests({
@@ -32191,6 +32189,8 @@ function main() {
             }
             else {
                 core.info(`No corresponding merged changelog pull request found. Checking if ${changelogBranch} contains latest changes from ${sourceBranch}`);
+                yield checkoutBranch(changelogBranch);
+                const lastChangelogBranchCommitSHA = yield getLastCommitSHA(changelogBranch);
                 const changelogBranchUpToDate = yield branchContainsCommit(changelogBranch, lastSourceBranchCommitSHA);
                 if (!changelogBranchUpToDate) {
                     core.setOutput("changelog-is-synced", false);
