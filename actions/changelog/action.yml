@@ -22,6 +22,9 @@ inputs:
   bugfix-commit-matchers:
     description: 'List of regular expression used in finding bugfix commits to be included in the changelog (defaults to "^bugfix")'
     default: '^bugfix'
+  include-default-commit-matchers:
+    description: 'Includes default regular expressions used in finding commits (defaults to true)'
+    default: 'true'
 outputs:
   pr-created:
     description: 'True when a PR is created'

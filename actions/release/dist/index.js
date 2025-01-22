@@ -32167,17 +32167,21 @@ function main() {
         try {
             core.info(`Running release action"...`);
             const changelogFileName = core.getInput("changelog-file-name");
+            const includeDefaultCommitMatchers = core.getInput("include-default-commit-matchers") === "true";
+            const defaultBreakingChangeCommitMatchers = ["BREAKING CHANGE"];
             const breakingChangeCommitMatchers = core.getInput("breaking-change-commit-matchers").split("\n");
+            const defaultFeatureCommitMatchers = ["^feature/[a-zA-Z0-9 -]+:", "^feat/[a-zA-Z0-9 -]+:"];
             const featureCommitMatchers = core.getInput("feature-commit-matchers").split("\n");
+            const defaultBugfixCommitMatchers = ["^feature/[a-zA-Z0-9 -]+ (PATCH):", "^bugfix/[a-zA-Z0-9 -]+:", "^fix/[a-zA-Z0-9 -]+:", "^(PATCH)"];
             const bugfixCommitMatchers = core.getInput("bugfix-commit-matchers").split("\n");
             const commitMatchers = {
-                breakingChange: breakingChangeCommitMatchers,
-                feature: featureCommitMatchers,
-                bugfix: bugfixCommitMatchers
+                breakingChange: [...new Set(breakingChangeCommitMatchers.concat(includeDefaultCommitMatchers ? defaultBreakingChangeCommitMatchers : []))],
+                feature: [...new Set(featureCommitMatchers.concat(includeDefaultCommitMatchers ? defaultFeatureCommitMatchers : []))],
+                bugfix: [...new Set(bugfixCommitMatchers.concat(includeDefaultCommitMatchers ? defaultBugfixCommitMatchers : []))],
             };
             const releaseBranch = core.getInput("release-branch");
             const githubToken = core.getInput("github-token");
-            const skipGithubRelease = core.getInput("skip-github-release");
+            const skipGithubRelease = core.getInput("skip-github-release") === "true";
             const octokit = github.getOctokit(githubToken);
             const { owner, repo } = github.context.repo;
             // !!These need to be placed here before any other git commands are run!!
@@ -32213,7 +32217,7 @@ function main() {
                 sha: lastCommitSHA,
             });
             core.info(`Created reference: ${ref.ref}`);
-            if (skipGithubRelease !== "true") {
+            if (!skipGithubRelease) {
                 core.info(`Creating GitHub release for "${newVersion}"...`);
                 const { data: release } = yield octokit.rest.repos.createRelease({
                     owner,
