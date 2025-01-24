@@ -1,54 +1,38 @@
-# @release-actions/release
+### Release
 
-This GitHub Action automates the process of preparing a release pull request (PR) and optionally creating a GitHub
-release. This action is customizable and integrates seamlessly with your repository.
+**Purpose:**  
+Automates the release process, including generating changelogs, tagging releases, and optionally creating GitHub releases.
 
-## Features
+#### Inputs:
 
-- Generates changelogs from commit messages.
-- Prepares a release PR with updates from the specified changelog file.
-- Supports targeting a specific branch for releases.
-- Optionally skips creating a GitHub release.
+| Name                         | Description                                                                                     | Default                  | Required |
+|------------------------------|-------------------------------------------------------------------------------------------------|--------------------------|----------|
+| `changelog-file-name`        | The file to be updated.                                                                        | `CHANGELOG.md`           | No       |
+| `release-branch`             | The branch where releases are made.                                                           | `main`                   | No       |
+| `github-token`               | GitHub token for authentication.                                                              | `${{ github.token }}`    | No       |
+| `breaking-change-commit-matchers` | Regular expressions to identify breaking change commits.                                      | `BREAKING CHANGE`        | No       |
+| `feature-commit-matchers`    | Regular expressions to identify feature commits.                                              | `^feature`               | No       |
+| `bugfix-commit-matchers`     | Regular expressions to identify bugfix commits.                                               | `^bugfix`                | No       |
+| `skip-github-release`        | Skips the creation of a GitHub release.                                                       | `false`                  | No       |
+| `include-default-commit-matchers` | Whether to include default matchers.                                                       | `true`                   | No       |
 
-## Inputs
+#### Outputs:
 
-| Name                  | Description                                               | Default        | Required |
-|-----------------------|-----------------------------------------------------------|----------------|----------|
-| `file-name`           | The file that should be updated, typically the changelog. | `CHANGELOG.md` | No       |
-| `target-branch`       | The branch on which releases are performed.               | `main`         | No       |
-| `github-token`        | Your GitHub token for authentication.                     | N/A            | Yes      |
-| `skip-github-release` | Whether to skip creating a GitHub release.                | `false`        | No       |
+| Name                | Description                                      |
+|---------------------|--------------------------------------------------|
+| `release-created`   | Indicates if a GitHub release was created (`true`/`false`). |
 
-## Outputs
-
-| Name              | Description                                             |
-|-------------------|---------------------------------------------------------|
-| `pr-created`      | Indicates if a release PR was successfully created.     |
-| `release-created` | Indicates if a GitHub release was successfully created. |
-
-## Usage
-
-Below is an example of how to use the **Release PR** action in a workflow file:
+#### Example Usage:
 
 ```yaml
-name: Create Release PR
-
-on:
-  push:
-    branches:
-      - main
-
 jobs:
-  release-pr:
+  release:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Prepare Release PR
-        uses: your-username/release-pr-action@v1
+      - name: Run Release Action
+        uses: GotBot-AI/releaser/actions/release@v1
         with:
-          file-name: 'CHANGELOG.md'
-          target-branch: 'main'
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          skip-github-release: 'false'
+          release-branch: 'master'
+          changelog-file-name: 'CHANGELOG.md'
+          skip-github-release: false
+```
