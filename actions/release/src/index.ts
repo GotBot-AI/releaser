@@ -1,13 +1,16 @@
 import * as core from '@actions/core';
 import * as github from '@actions/github';
 import {
+    defaultBreakingChangeCommitMatchers,
+    defaultBugfixCommitMatchers,
+    defaultFeatureCommitMatchers,
     fetchBranchWithTags,
     fetchOriginUnshallow,
     getExistingVersionLog,
     getLastCommitSHA,
     getLastVersionTag,
     getNextVersion,
-    setupLocalUser
+    setupLocalUser,
 } from "@releaser/utils";
 
 async function main() {
@@ -15,11 +18,8 @@ async function main() {
         core.info(`Running release action"...`);
         const changelogFileName = core.getInput("changelog-file-name");
         const includeDefaultCommitMatchers = core.getInput("include-default-commit-matchers") === "true";
-        const defaultBreakingChangeCommitMatchers = ["BREAKING CHANGE"];
         const breakingChangeCommitMatchers = core.getInput("breaking-change-commit-matchers").split("\n");
-        const defaultFeatureCommitMatchers = ["^feature/[a-zA-Z0-9 -]+:", "^feat/[a-zA-Z0-9 -]+:"];
         const featureCommitMatchers = core.getInput("feature-commit-matchers").split("\n");
-        const defaultBugfixCommitMatchers = ["^feature/[a-zA-Z0-9 -]+ (PATCH):", "^bugfix/[a-zA-Z0-9 -]+:", "^fix/[a-zA-Z0-9 -]+:", "^(PATCH)"];
         const bugfixCommitMatchers = core.getInput("bugfix-commit-matchers").split("\n");
         const commitMatchers = {
             breakingChange: [...new Set(breakingChangeCommitMatchers.concat(includeDefaultCommitMatchers ? defaultBreakingChangeCommitMatchers : []))],

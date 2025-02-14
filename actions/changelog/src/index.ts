@@ -3,6 +3,9 @@ import * as github from '@actions/github';
 import {
     checkoutBranch,
     createAndCheckoutBranch,
+    defaultBreakingChangeCommitMatchers,
+    defaultBugfixCommitMatchers,
+    defaultFeatureCommitMatchers,
     fetchBranchWithTags,
     fetchOriginUnshallow,
     forcePushCommits,
@@ -22,11 +25,8 @@ async function main() {
         const releaseBranch = core.getInput("release-branch");
         const sourceBranch = core.getInput("source-branch");
         const includeDefaultCommitMatchers = core.getInput("include-default-commit-matchers") === "true";
-        const defaultBreakingChangeCommitMatchers = ["BREAKING CHANGE"];
         const breakingChangeCommitMatchers = core.getInput("breaking-change-commit-matchers").split("\n");
-        const defaultFeatureCommitMatchers = ["^feature/[a-zA-Z0-9 -]+:", "^feat/[a-zA-Z0-9 -]+:"];
         const featureCommitMatchers = core.getInput("feature-commit-matchers").split("\n");
-        const defaultBugfixCommitMatchers = ["^feature/[a-zA-Z0-9 -]+ (PATCH):", "^bugfix/[a-zA-Z0-9 -]+:", "^fix/[a-zA-Z0-9 -]+:", "^(PATCH)"];
         const bugfixCommitMatchers = core.getInput("bugfix-commit-matchers").split("\n");
         const commitMatchers = {
             breakingChange: [...new Set(breakingChangeCommitMatchers.concat(includeDefaultCommitMatchers ? defaultBreakingChangeCommitMatchers : []))],

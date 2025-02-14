@@ -3,6 +3,7 @@ export * from "./branch";
 export * from "./changelog";
 export * from "./commit";
 export * from "./execute";
+export * from "./matchers";
 export * from "./origin";
 export * from "./user";
 export * from "./version";

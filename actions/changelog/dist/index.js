@@ -32042,6 +32042,25 @@ function updateChangelog(fileName_1, newVersion_1, prevVersion_1, _a) {
     });
 }
 
+;// CONCATENATED MODULE: ../../packages/utils/dist/matchers.js
+const defaultBreakingChangeCommitMatchers = ["BREAKING CHANGE"];
+const defaultFeatureCommitMatchers = [
+    "^feature/[a-zA-Z0-9 -]+:",
+    "^\\* feature/[a-zA-Z0-9 -]+:",
+    "^feat/[a-zA-Z0-9 -]+:",
+    "\\* ^feat/[a-zA-Z0-9 -]+:",
+];
+const defaultBugfixCommitMatchers = [
+    "^feature/[a-zA-Z0-9 -]+ (PATCH):",
+    "^\\* feature/[a-zA-Z0-9 -]+ (PATCH):",
+    "^bugfix/[a-zA-Z0-9 -]+:",
+    "^\\* bugfix/[a-zA-Z0-9 -]+:",
+    "^fix/[a-zA-Z0-9 -]+:",
+    "^\\* fix/[a-zA-Z0-9 -]+:",
+    "^(PATCH)",
+    "^\\* (PATCH)",
+];
+
 ;// CONCATENATED MODULE: ../../packages/utils/dist/origin.js
 var origin_awaiter = (undefined && undefined.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
@@ -32149,6 +32168,7 @@ function getNextVersion(lastVersion_1, _a) {
 
 
 
+
 ;// CONCATENATED MODULE: ./src/index.ts
 var src_awaiter = (undefined && undefined.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
@@ -32170,11 +32190,8 @@ function main() {
             const releaseBranch = core.getInput("release-branch");
             const sourceBranch = core.getInput("source-branch");
             const includeDefaultCommitMatchers = core.getInput("include-default-commit-matchers") === "true";
-            const defaultBreakingChangeCommitMatchers = ["BREAKING CHANGE"];
             const breakingChangeCommitMatchers = core.getInput("breaking-change-commit-matchers").split("\n");
-            const defaultFeatureCommitMatchers = ["^feature/[a-zA-Z0-9 -]+:", "^feat/[a-zA-Z0-9 -]+:"];
             const featureCommitMatchers = core.getInput("feature-commit-matchers").split("\n");
-            const defaultBugfixCommitMatchers = ["^feature/[a-zA-Z0-9 -]+ (PATCH):", "^bugfix/[a-zA-Z0-9 -]+:", "^fix/[a-zA-Z0-9 -]+:", "^(PATCH)"];
             const bugfixCommitMatchers = core.getInput("bugfix-commit-matchers").split("\n");
             const commitMatchers = {
                 breakingChange: [...new Set(breakingChangeCommitMatchers.concat(includeDefaultCommitMatchers ? defaultBreakingChangeCommitMatchers : []))],
